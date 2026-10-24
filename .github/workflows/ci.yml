@@ -1,10 +1,12 @@
 name: CI
 
-# Every push: lint, test, typecheck + build. Pushes to main also deploy to GitHub Pages.
+# Every branch push: lint, test, typecheck + build. Pushes to main also deploy to GitHub Pages.
 # One-time setup: repository Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
 
 on:
   push:
+    # Branches only: tag pushes (milestone tags like m0) do not need another run.
+    branches: ['**']
   workflow_dispatch:
 
 permissions:

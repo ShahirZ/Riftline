@@ -44,4 +44,5 @@ npm run build     # typecheck + production build into dist/
 npm run preview   # serve dist/ at http://localhost:4173/Riftline/
 ```
 
-Architecture, conventions and project rules are in [CLAUDE.md](CLAUDE.md).
+The design spec is [docs/DESIGN.md](docs/DESIGN.md). Architecture, conventions and project rules
+are in [CLAUDE.md](CLAUDE.md).

@@ -1,8 +1,8 @@
 # RIFTLINE roadmap
 
-One milestone at a time. Each ends with build + lint + tests green, a pushed commit, updated
-docs, and a playtest checklist for the project owner. The next milestone starts only on the
-owner's go-ahead.
+One milestone at a time. Each ends with build + lint + tests green, a pushed commit on `main`
+tagged `mN`, updated docs, and a playtest checklist for the project owner. The next milestone
+starts only on the owner's go-ahead. The owner's full spec is [DESIGN.md](DESIGN.md).
 
 Status legend: ✅ done · 🟡 in progress · ⬜ not started
 
@@ -36,8 +36,8 @@ Delivered:
 - CI on every push (lint, tests, typecheck, build); deploy to GitHub Pages on `main`.
 - Headless smoke test (`npm run smoke`) of the production build under the `/Riftline/` base path.
 
-Not yet verified: the live GitHub Pages deployment (needs Pages enabled and a push to `main`; the
-cloud sandbox cannot reach `*.github.io`).
+Released as tag `m0` on `main`, deployed to GitHub Pages by CI. The cloud sandbox cannot reach
+`*.github.io`, so the live page itself is checked by the owner.
 
 ## M1 Movement & camera ⬜
 

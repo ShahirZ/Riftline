@@ -2,7 +2,12 @@
 
 Original browser-based tactical FPS: round-based 4v4 attack/defend against bots. Vite + TypeScript
 (strict) + three.js + Rapier (compat build) + WebAudio. No external art or audio assets: everything
-is procedural or in code. Milestones and acceptance criteria live in [docs/ROADMAP.md](docs/ROADMAP.md).
+is procedural or in code.
+
+- **[docs/DESIGN.md](docs/DESIGN.md)**: the owner's full design spec and workflow rules, plus
+  dated owner amendments. The source of truth for scope and process; read it before starting a
+  milestone.
+- **[docs/ROADMAP.md](docs/ROADMAP.md)**: milestone status, acceptance criteria, known stubs.
 
 ## Ground rules (from the project owner)
 
@@ -21,10 +26,14 @@ is procedural or in code. Milestones and acceptance criteria live in [docs/ROADM
 1. Build one milestone at a time, in roadmap order.
 2. When it is done: `npm run lint`, `npm test`, `npm run build` all green (fix everything), then
    `npm run smoke` for anything that touches rendering or boot.
-3. Commit with a clear message, push, update this file's "Current status" and the roadmap.
-4. Stop and report: (a) what changed, (b) the live URL or run command, (c) a short playtest
+3. Update this file's "Current status" and the roadmap, commit with a clear message, and push the
+   working branch.
+4. Fast-forward `main` to the milestone commit and push it (standing owner permission, see
+   DESIGN.md amendments), tag it `mN` (annotated) and push the tag. Wait for the Pages deploy job
+   to finish and report its result.
+5. Stop and report: (a) what changed, (b) the live URL or run command, (c) a short playtest
    checklist of specific things to try. Do not start the next milestone until the owner says so.
-5. Claude cannot playtest feel. Logic gets headless tests (economy, round state, nav, damage,
+6. Claude cannot playtest feel. Logic gets headless tests (economy, round state, nav, damage,
    recoil determinism, movement edge cases); say plainly what only a human can judge.
 
 ## Commands
@@ -131,8 +140,11 @@ Settings -> `client/settings`. Definitions for all of them go in `src/data`.
 
 ## Deployment
 
-- `.github/workflows/ci.yml`: every push runs lint, tests, typecheck and build, and uploads the
-  built site as an artifact. Pushes to `main` also deploy to GitHub Pages.
+- `.github/workflows/ci.yml`: every branch push runs lint, tests, typecheck and build, and
+  uploads the built site as an artifact. Pushes to `main` also deploy to GitHub Pages. Tag pushes
+  do not trigger CI. `workflow_dispatch` allows re-running a deploy without an empty commit.
+- Claude has standing permission to push finished milestones to `main` (fast-forward from the
+  working branch) and tags each one `mN`.
 - One-time setup by the repo owner: Settings -> Pages -> Build and deployment -> Source:
   **GitHub Actions**.
 - Live URL: https://shahirz.github.io/Riftline/
@@ -157,7 +169,6 @@ Dev: `vite`, `typescript`, `vitest`, `eslint`, `@eslint/js`, `typescript-eslint`
 
 ## Current status
 
-- **M0 Foundation: complete.** Scaffold, tooling, CI + Pages workflow, sim/render skeleton, debug
-  overlay, placeholder scene, smoke test. The live deploy is pending the one-time Pages setup and a
-  merge to `main`.
+- **M0 Foundation: complete, tagged `m0`, on `main`.** Scaffold, tooling, CI + Pages workflow,
+  sim/render skeleton, debug overlay, placeholder scene, smoke test, design spec in docs/DESIGN.md.
 - **Next: M1 Movement & camera**, waiting for the owner's go-ahead.
