@@ -36,8 +36,9 @@ Delivered:
 - CI on every push (lint, tests, typecheck, build); deploy to GitHub Pages on `main`.
 - Headless smoke test (`npm run smoke`) of the production build under the `/Riftline/` base path.
 
-Released as tag `m0` on `main`, deployed to GitHub Pages by CI. The cloud sandbox cannot reach
-`*.github.io`, so the live page itself is checked by the owner.
+Released on `main` (milestone tag `m0`, created by the owner) and deployed to GitHub Pages by CI;
+the deploy job reported success. The cloud sandbox cannot reach `*.github.io`, so the live page
+itself is checked by the owner.
 
 ## M1 Movement & camera ⬜
 
