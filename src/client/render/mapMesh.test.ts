@@ -40,6 +40,8 @@ function single(solid: MapDef['solids'][number]): MapDef {
     name: 'Mesh test',
     bounds: { min: [-10, -10, -10], max: [10, 10, 10] },
     solids: [solid],
+    spawns: { attacker: [], defender: [] },
+    regions: [],
   };
 }
 

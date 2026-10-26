@@ -8,6 +8,9 @@
 
 export type Vec3Tuple = readonly [x: number, y: number, z: number];
 
+/** A point on the ground plane, seen from above: [x, z]. */
+export type Vec2Tuple = readonly [x: number, z: number];
+
 /**
  * Surface material. Drives the render palette and, in later milestones, footstep sounds and
  * bullet penetration.
@@ -40,10 +43,30 @@ export interface RampSolid {
 
 export type SolidDef = BoxSolid | RampSolid;
 
+/** Where a player enters the map. */
+export interface SpawnPoint {
+  /** Feet position, on the floor. */
+  readonly position: Vec3Tuple;
+  /** Facing in radians: 0 looks north (-Z), positive turns left (counter-clockwise from above). */
+  readonly yaw: number;
+}
+
+/** A named area for callouts, the layout image and (later) the minimap. */
+export interface RegionDef {
+  readonly name: string;
+  readonly min: Vec2Tuple;
+  readonly max: Vec2Tuple;
+}
+
 export interface MapDef {
   readonly id: string;
   readonly name: string;
   /** Playable volume. Every solid must fit inside it. */
   readonly bounds: { readonly min: Vec3Tuple; readonly max: Vec3Tuple };
   readonly solids: readonly SolidDef[];
+  readonly spawns: {
+    readonly attacker: readonly SpawnPoint[];
+    readonly defender: readonly SpawnPoint[];
+  };
+  readonly regions: readonly RegionDef[];
 }

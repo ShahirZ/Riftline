@@ -15,11 +15,18 @@ export function physicsVersion(): string {
 }
 
 /**
- * The sim's collision world: static map geometry today, character colliders from M1.
+ * Largest collider extent along any axis, m. Rapier's shape casts lose precision near the middle of
+ * very large boxes (casts against a 100 m floor slab were off by a centimeter or missed outright),
+ * so bigger map boxes are split into pieces no larger than this. Rendering is unaffected.
+ */
+export const MAX_COLLIDER_EXTENT = 8;
+
+/**
+ * The sim's collision world: the static map geometry that movement and (later) shots query.
  *
- * Rapier gotcha: scene queries (raycasts, shape casts, the character controller) only see colliders
- * after the broad phase has been updated, which happens in `world.step()`. `syncQueries()` must run
- * after adding or moving colliders.
+ * Rapier gotcha: scene queries (raycasts, shape casts) only see colliders after the broad phase has
+ * been updated, which happens in `world.step()`. `syncQueries()` must run after adding or moving
+ * colliders.
  */
 export class PhysicsWorld {
   readonly world: RAPIER.World;
@@ -76,9 +83,22 @@ export class PhysicsWorld {
     const [x0, y0, z0] = solid.min;
     const [x1, y1, z1] = solid.max;
     if (solid.kind === 'box') {
-      const desc = RAPIER.ColliderDesc.cuboid((x1 - x0) / 2, (y1 - y0) / 2, (z1 - z0) / 2);
-      desc.setTranslation((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
-      this.world.createCollider(desc);
+      // Split into equal pieces no larger than MAX_COLLIDER_EXTENT on any axis.
+      const nx = Math.ceil((x1 - x0) / MAX_COLLIDER_EXTENT - 1e-9);
+      const ny = Math.ceil((y1 - y0) / MAX_COLLIDER_EXTENT - 1e-9);
+      const nz = Math.ceil((z1 - z0) / MAX_COLLIDER_EXTENT - 1e-9);
+      const sx = (x1 - x0) / nx;
+      const sy = (y1 - y0) / ny;
+      const sz = (z1 - z0) / nz;
+      for (let i = 0; i < nx; i++) {
+        for (let j = 0; j < ny; j++) {
+          for (let k = 0; k < nz; k++) {
+            const desc = RAPIER.ColliderDesc.cuboid(sx / 2, sy / 2, sz / 2);
+            desc.setTranslation(x0 + sx * (i + 0.5), y0 + sy * (j + 0.5), z0 + sz * (k + 0.5));
+            this.world.createCollider(desc);
+          }
+        }
+      }
       return;
     }
     const desc = RAPIER.ColliderDesc.convexHull(rampCorners(solid, this.cornerScratch));

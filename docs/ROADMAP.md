@@ -9,9 +9,9 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started
 | Milestone               | Status | Summary                                                                                              |
 | ----------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
 | M0 Foundation           | ✅     | Tooling, CI, Pages workflow, sim/render skeleton, debug overlay, placeholder scene                   |
-| M1 Movement & camera    | ⬜     | Pointer lock, character controller, Foundry blockout, FPS camera, settings basics                    |
+| M1 Movement & camera    | ✅     | Pointer lock, character controller, Foundry blockout, FPS camera, settings basics                    |
 | M2 Weapons              | ⬜     | All weapons, recoil/spread, reload/swap, viewmodels, hitboxes, damage, dummies, hit/kill feedback    |
-| M3 Map                  | ⬜     | Final Foundry geometry, lighting, props, nav graph, minimap data, layout image generator             |
+| M3 Map                  | ⬜     | Final Foundry geometry, lighting, props, nav graph, minimap data                                     |
 | M4 Bots                 | ⬜     | Full AI: nav, perception, aim model, roles, abilities hooks, callouts, 3 difficulties, debug viz     |
 | M5 Round loop & economy | ⬜     | Round state machine, relay arm/disarm, buy menu, scoreboard, win/loss flow, restart                  |
 | M6 Agents & abilities   | ⬜     | 3 agents, 6 abilities, bot ability use                                                               |
@@ -40,25 +40,61 @@ Released on `main` (milestone tag `m0`, created by the owner) and deployed to Gi
 the deploy job reported success. The cloud sandbox cannot reach `*.github.io`, so the live page
 itself is checked by the owner.
 
-## M1 Movement & camera ⬜
+## M1 Movement & camera ✅
 
 Done when movement feels crisp and has no tunneling, jitter, or stuck states.
 
-- Pointer lock with raw (unaccelerated) mouse input where supported; Esc releases and pauses.
-- Input sampler builds one `InputCommand` per tick; press edges are latched so taps shorter than a
-  tick are never lost. Mouse look applies at display rate (no tick latency).
-- Rapier kinematic character controller (capsule) with our own acceleration/friction model: walk,
-  run, crouch, jump; fast accel/decel so counter-strafing works; limited air control; no
-  bunny-hop gain (landing speed penalty, air speed cap). Step-up, slope limits, slide along walls.
-- Own ground probe with a short grace period to stop grounded-state flicker on seams and edges.
-- Foundry blockout: full layout in boxes/ramps with a dev grid so speed and distances are readable.
-- FPS camera: FOV setting, crouch height transition, subtle landing dip. No head bob by default.
-- Settings basics (sensitivity, FOV, volume placeholder, invert Y), persisted in localStorage with
-  try/catch.
-- Live tuning panel for movement constants with "copy as JSON" so feel feedback comes back as
-  numbers.
-- Tests: no tunneling at max speed into thin walls, step-up works, no stuck states at seams and
-  corners, counter-strafe stop time, jump height, bunny-hop gives no speed gain.
+Delivered:
+
+- **Movement rules** (`sim/movement/PlayerMovement.ts`, numbers in `data/movement.ts`): run 6.0,
+  walk 3.1, crouch 2.0 m/s. Ground friction + acceleration: 0 to 95% speed in about 133 ms;
+  releasing reaches 1.5 m/s in about 150 ms (stop about 217 ms), counter-strafing in about 50 ms
+  (stop about 67 ms). Air control steers and brakes but never exceeds the takeoff speed, and hard
+  landings cut speed, so bunny-hopping and air-strafing gain nothing. Jump 1.05 m (crouch-jump
+  about 1.6 m: crouching in the air tucks the feet), jump buffer 0.1 s, ledge grace 0.08 s. Crouch
+  with headroom checks; eye height transitions over 0.12 s.
+- **Character motor** (`sim/movement/CharacterMotor.ts`): own collide-and-slide on Rapier shape
+  casts with crease handling, step-up to 0.45 m, slopes walkable to 45°, ground snapping, ground
+  probe, overlap tests and a depenetration safety net. Upright rounded-cylinder body with a 1.5 cm
+  skin that never creeps into contact (no wall jitter).
+- **Input**: pointer lock with raw mouse input where supported and a fallback elsewhere; one
+  `InputCommand` per tick with latched taps; mouse look at display rate; Esc pauses (the sim
+  stops), click to resume. Crouch on C (Ctrl+W would close the tab).
+- **Camera**: horizontal FOV at 16:9 (wider screens see more), interpolated position, crouch
+  transition, step smoothing, subtle landing dip, no head bob.
+- **Foundry blockout** (`data/maps/foundry.ts`): full original layout on a 1 m grid with two sites,
+  mid, three lanes, chokes, long sightlines, cover at walk/jump/crouch-jump heights, a raised
+  ledge, a balcony, a gantry with stairs and a roofed tunnel; spawn points and callout regions in
+  the data. Attackers reach a site in about 11-14 s, defenders in about 8 s.
+- **Movement gym** (`?map=gym`): measured steps, slopes, jump boxes, crouch tunnels, gap jumps,
+  stairs, a seamed wall, a narrow corridor and a thin wall.
+- **Dev grid**: 1 m and 5 m lines on every surface, drawn in the map shader (toggle in Settings).
+- **Layout images** (`docs/maps/*.svg`, `npm run maps`): top-down views with heights, ramps,
+  callouts and spawns; a test keeps them in sync with the map data. (Pulled forward from M3.)
+- **Settings**: sensitivity (with cm/360 readout), invert Y, FOV, volume (no audio yet), dev grid,
+  speed graph; saved in localStorage, validated on load, safe when storage is blocked.
+- **Live movement tuning** (pause menu): every movement constant with sliders, reset, persistence
+  across reloads and "Copy as JSON". The speed graph HUD measures stop times (release vs
+  counter-strafe), time to full speed and jump height, air time and distance.
+- **Tests**: 129 in total. Movement: speeds, counter-strafe vs release, jump height and air
+  time, buffer and ledge grace, no double jump, landing slowdown, bunny-hop and air-strafe give no
+  gain, crouch and headroom, crouch-jump, ledge edges, steps (0.45 m climbs, 0.55 m blocks),
+  stairs up and down without leaving the ground, 30° ramps at full speed, 50° blocked, no
+  tunneling through 5 cm walls/floors at any speed, wall slides without a single stalled tick on
+  seamed walls and tiled floors, corners without jitter, determinism. Fuzz: random play on
+  Foundry and the gym never touches geometry, falls out or gets stuck.
+- **Smoke test** plays both maps in headless Chromium: click Play, walk, jump, pause.
+
+Decisions and deviations:
+
+- The spec names "Rapier kinematic character controller". Rapier's built-in
+  `KinematicCharacterController` stalls for a tick when sliding along a wall while touching the
+  floor (reproduced: one or two stalls per 10 s of wall-running) and sinks into floors with small
+  offsets. The controller is instead our own kinematic motor built on Rapier's scene queries
+  (shape casts), with the same features: step-up, slide, slopes, snapping.
+- Capsule bodies balance on ledge edges and reject step-ups; plain cylinders and boxes trigger
+  false contacts in Rapier's casts. The body is a cylinder with rounded rims (see CLAUDE.md
+  Gotchas for the measurements).
 
 ## M2 Weapons ⬜
 
@@ -78,10 +114,10 @@ Done when shooting feels good at every range.
 ## M3 Map ⬜
 
 - Final Foundry geometry: two sites, mid, three lanes, chokepoints, long sightlines, cover,
-  verticality. Original layout.
+  verticality. Original layout, starting from the M1 blockout and the owner's layout feedback.
 - Lighting, props (instanced), surface materials (for footsteps and penetration).
-- Hand-authored waypoint graph; minimap source data; callout regions.
-- Top-down layout generator (image committed to `docs/`) for layout discussions.
+- Hand-authored waypoint graph; minimap source data (callout regions exist since M1).
+- Top-down layout images exist since M1 (`docs/maps/`); extend them with the nav graph.
 - Tests: every nav edge traversable by the character controller; map validation.
 
 ## M4 Bots ⬜
@@ -128,8 +164,6 @@ lockstep is not planned).
 
 ## Known stubs and placeholders
 
-| Where                                                    | What                                     | Replaced in |
-| -------------------------------------------------------- | ---------------------------------------- | ----------- |
-| `src/sim/showcase/`, `src/client/render/ShowcaseView.ts` | Placeholder diorama content and camera   | M1          |
-| `src/data/maps/showcase.ts`                              | Placeholder map                          | M1          |
-| `InputCommand`                                           | Defined and tested, not yet fed by input | M1          |
+| Where                                                         | What                                       | Replaced in |
+| ------------------------------------------------------------- | ------------------------------------------ | ----------- |
+| `client/settings/Settings.ts`, `client/menu/SettingsPanel.ts` | Volume is saved and shown; no sound exists | M7          |

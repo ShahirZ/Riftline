@@ -16,7 +16,8 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "tsc -b",
-    "smoke": "node scripts/smoke.ts"
+    "smoke": "node scripts/smoke.ts",
+    "maps": "node scripts/maps.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",

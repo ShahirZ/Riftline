@@ -5,7 +5,17 @@ declare const __BUILD_SHA__: string;
 interface RiftlineDebugHandle {
   readonly ready: boolean;
   readonly build: string;
+  readonly map: string;
   tick(): number;
+  playing(): boolean;
+  player(): {
+    x: number;
+    y: number;
+    z: number;
+    speed: number;
+    onGround: boolean;
+    crouched: boolean;
+  };
 }
 
 interface Window {
